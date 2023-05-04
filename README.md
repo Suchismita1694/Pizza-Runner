@@ -1,6 +1,7 @@
 # Pizza-Runner
 Danny Ma's SQL Challenge #2
 
+```
 DROP TABLE IF EXISTS runners;
 CREATE TABLE runners (
   "runner_id" INTEGER,
@@ -113,23 +114,27 @@ VALUES
   (10, 'Salami'),
   (11, 'Tomatoes'),
   (12, 'Tomato Sauce');
-
-
-
-
+```
 
 
 -- PIZZA MATRICS
 
 --1.How many pizzas were ordered?
 
+```
 select Count(*) as pizza_ordered from customer_orders;
+```
 
 --2.How many unique customer orders were made?
+
+```
 select count(distinct order_id)
 from customer_orders
+```
 
 -- updating the coloum with null
+
+```
 update runner_orders
 set pickup_time = NULL
 where pickup_time = 'null'
@@ -145,15 +150,22 @@ where duration = 'null'
 update runner_orders
 set cancellation = NULL
 where cancellation = 'null'
+```
 
+```
 select * from runner_orders;
+```
 
 --3.How many successful orders were delivered by each runner?
+
+```
 select count(pickup_time) as orders_delivered,runner_id from runner_orders
 group by runner_id;
+```
 
 --4. How many of each type of pizza was delivered?
 
+```
 select count(co.pizza_id) as pizza_ordered, cast(pizza_name as nvarchar(100)) -- cast is used to change the datatype from text to nvarchar
 from customer_orders co
 join pizza_names pn
@@ -162,8 +174,11 @@ join runner_orders r
 on r.order_id= co.order_id
 where r.pickup_time is not null
 group by cast(pizza_name as nvarchar(100))
+```
 
 --5.How many Vegetarian and Meatlovers were ordered by each customer?
+
+```
 select count(co.pizza_id) as pizza_ordered, cast(pizza_name as nvarchar(100)), co.customer_id
 from customer_orders co
 join pizza_names pn
@@ -173,8 +188,11 @@ on r.order_id= co.order_id
 where r.pickup_time is not null
 group by cast(pizza_name as nvarchar(100)),co.customer_id
 order by co.customer_id
+```
 
 --6.What was the maximum number of pizzas delivered in a single order?
+
+```
 with cte as 
 (select Count(pizza_id) as pizza_count,ro.order_id 
 from runner_orders ro
@@ -183,15 +201,18 @@ on ro.order_id = co.order_id
 group by ro.order_id)
 select max(cte.pizza_count) as max_pizza_delivered
 from cte
+```
 
 --7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+
+```
 select *
 from customer_orders
-
 
 update customer_orders
 set exclusions = ' ' 
 where exclusions is null
+
 
 update customer_orders
 set extras = ' ' 
@@ -210,8 +231,11 @@ join runner_orders r
 on r.order_id = cte.order_id
 where pickup_time is not null
 group by customer_id
+```
 
 --8.How many pizzas were delivered that had both exclusions and extras?
+
+```
 with cte as 
 (select *,
 case when exclusions <> ' ' and extras <> ' ' then 1
@@ -222,23 +246,31 @@ from cte
 join runner_orders r
 on r.order_id = cte.order_id
 where pickup_time is not null
+```
 
 --9.What was the total volume of pizzas ordered for each hour of the day?
+
+```
 select count(order_id) as pizza_count,
 datepart (Hour, [order_time]) as hr_day
 from customer_orders
 group by datepart (Hour, [order_time])
+```
 
 --10.What was the volume of orders for each day of the week?
+
+```
 select count(order_id) as pizza_count,
 datename (WEEKDAY, [order_time])
 from customer_orders
 group by datename (WEEKDAY, [order_time])
 order by pizza_count
+```
 
 --B. Runner and Customer Experience
 -- Cleaning two columns distance and duration from runner_orders table
 
+```
 update runner_orders
 set duration = case WHEN duration LIKE '%mins' THEN TRIM('mins' from duration) 
     WHEN duration LIKE '%minute' THEN TRIM('minute' from duration)        
@@ -254,15 +286,20 @@ set distance = case WHEN distance LIKE '%km' THEN TRIM('km' from distance)
 
 alter table runner_orders
 alter column distance float
-
+```
 
 --1.How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
+
+```
 select count(*), 
 DATEPART(week, [registration_date])
 from runners
 group by DATEPART(week, [registration_date]);
+```
 
 --2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
+
+```
 with cte as
 (select r.order_id, pickup_time, c.order_time,
 DATEDIFF(minute,c.order_time,r.pickup_time) as timediff
@@ -276,9 +313,11 @@ from cte
 join runner_orders r
 on r.order_id = cte.order_id
 group by runner_id;
-
+```
 
 --3.Is there any relationship between the number of pizzas and how long the order takes to prepare?
+
+```
 with cte as
 (select count(r.order_id) as p_cnt, r.order_id,
 DATEDIFF(minute,c.order_time,r.pickup_time)as timediff
@@ -290,31 +329,39 @@ group by DATEDIFF(minute,c.order_time,r.pickup_time), r.order_id)
 select p_cnt, AVG(timediff)
 from cte
 group by p_cnt;
-
+```
 
 --4.What was the average distance travelled for each customer?
+
+```
 select c.customer_id, AVG (distance)
 from runner_orders r
 join customer_orders c
 on r.order_id = c.order_id
 group by c.customer_id
+```
 
 --5.What was the difference between the longest and shortest delivery times for all orders?
 
+```
 select Max(duration) - Min(duration)
 from runner_orders
+```
 
 --6.What was the average speed for each runner for each delivery and do you notice any trend for these values?
 
+```
 with cte as 
 (select Round((distance * 60/duration),2) as speed, runner_id,order_id
 from runner_orders)
 select AVG(speed) as avg_speed, runner_id
 from cte 
 group by runner_id
+```
 
 --7.What is the successful delivery percentage for each runner?
 
+```
 with cte as
 (select runner_id,
         count(order_id) as total_order,
@@ -324,10 +371,11 @@ with cte as
 
 select runner_id, Round(((total_delivered*0.1)/(total_order*0.1))*100,2) as successfull_delivery_percentage
 from cte
+```
 
 
 -- C. Ingredient Optimisation
 
 --1.What are the standard ingredients for each pizza?
 
-# Work in Progress
+ Work in Progress
